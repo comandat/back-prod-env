@@ -1,27 +1,26 @@
-# 1. Plecam de la imaginea oficiala n8n
+# 1. Plecam de la imaginea oficiala n8n (care acum este Debian-based)
 FROM n8nio/n8n:latest
 
-# 2. Trecem pe userul root ca sa putem instala programe
 USER root
 
-# 3. Instalam Chromium si dependintele necesare pentru Puppeteer
-# Acestea sunt bibliotecile de sistem ca sa ruleze browserul pe server
-RUN apk add --no-cache \
+# 2. Actualizam lista de pachete si instalam Chromium + dependintele pentru Debian
+# Folosim apt-get in loc de apk
+RUN apt-get update && apt-get install -y \
     chromium \
-    nss \
-    freetype \
-    harfbuzz \
+    libnss3 \
+    libfreetype6 \
+    libharfbuzz0b \
     ca-certificates \
-    ttf-freefont \
+    fonts-freefont-ttf \
     nodejs \
-    npm
+    npm \
+    && rm -rf /var/lib/apt/lists/*
 
-# 4. Spunem sistemului unde se afla Chromium si sa nu-l mai descarce Puppeteer
+# 3. Spunem sistemului unde se afla Chromium (pe Debian e in /usr/bin/chromium)
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# 5. Instalam libraria Puppeteer global ca sa o vada n8n
+# 4. Instalam libraria Puppeteer global
 RUN npm install -g puppeteer
 
-# 6. Ne intoarcem la userul 'node' pentru securitate (standard n8n)
 USER node
