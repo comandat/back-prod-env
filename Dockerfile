@@ -20,8 +20,9 @@ RUN apt-get update && apt-get install -y \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# 4. Instalăm n8n și Puppeteer (tot ca root)
-RUN npm install -g n8n puppeteer n8n-nodes-puppeteer
+# 4. Instalăm n8n, Puppeteer și PLUGIN-UL LIPSA (tot ca root)
+# Am adaugat 'puppeteer-extra-plugin-user-preferences' la finalul listei
+RUN npm install -g n8n puppeteer n8n-nodes-puppeteer puppeteer-extra-plugin-user-preferences
 
 # 5. IMPORTANT: Trecem pe userul 'node' pentru a rula aplicația în siguranță
 USER node
