@@ -1,10 +1,10 @@
-# 1. Plecăm de la o imagine proaspătă de Linux (Debian 12)
+# 1. Imaginea de bază
 FROM node:20-bookworm
 
-# 2. Suntem automat root. Instalăm Chromium, Xvfb și dependențele de sistem.
+# 2. Instalări (root)
 USER root
 
-# Am adăugat 'xvfb' în lista de pachete
+# Instalăm chromium, xvfb și utilitarele necesare
 RUN apt-get update && apt-get install -y \
     chromium \
     xvfb \
@@ -13,16 +13,16 @@ RUN apt-get update && apt-get install -y \
     libharfbuzz0b \
     ca-certificates \
     fonts-freefont-ttf \
-    nodejs \
-    npm \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Setăm calea către browser
+# 3. Variabile de mediu
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    # IMPORTANT: Permitem modulele externe
+    NODE_FUNCTION_ALLOW_EXTERNAL=puppeteer,puppeteer-extra,puppeteer-extra-plugin-stealth,puppeteer-extra-plugin-user-data-dir,puppeteer-extra-plugin-user-preferences
 
-# 4. Instalăm n8n și modulele necesare (Stealth, Extra, User-Data)
+# 4. Instalăm modulele Puppeteer Extra
 RUN npm install -g n8n \
     puppeteer \
     n8n-nodes-puppeteer \
@@ -31,17 +31,11 @@ RUN npm install -g n8n \
     puppeteer-extra-plugin-user-data-dir \
     puppeteer-extra-plugin-user-preferences
 
-# ... (restul fișierului rămâne la fel până la pasul 5) ...
-
-# 5. Configurare n8n
-ENV NODE_FUNCTION_ALLOW_EXTERNAL=puppeteer,puppeteer-extra,puppeteer-extra-plugin-stealth,puppeteer-extra-plugin-user-data-dir,puppeteer-extra-plugin-user-preferences
-
-# 6. Setăm variabila DISPLAY global (Astfel orice proces va ști unde e ecranul)
-ENV DISPLAY=:99
-
-# 7. Trecem pe userul 'node'
+# 5. Trecem pe userul 'node'
 USER node
 
-# 8. Comanda de start modificată:
-# Pornim Xvfb pe portul 99 în background (&), așteptăm 2 secunde să se inițieze, apoi pornim n8n
-CMD ["sh", "-c", "Xvfb :99 -screen 0 1920x1080x24 -ac & sleep 2 && n8n"]
+# 6. COMANDA CHEIE (Aici folosim xvfb-run)
+# --auto-servernum: Găsește singur un port liber (evită erorile de lock)
+# --server-args: Setează rezoluția ecranului virtual la 1920x1080
+# n8n: Comanda finală care va rula în acest mediu grafic
+CMD ["xvfb-run", "--auto-servernum", "--server-args=-screen 0 1920x1080x24", "n8n"]
