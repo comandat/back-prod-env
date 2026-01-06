@@ -31,12 +31,17 @@ RUN npm install -g n8n \
     puppeteer-extra-plugin-user-data-dir \
     puppeteer-extra-plugin-user-preferences
 
-# 5. Configurare n8n pentru a permite importul modulelor externe
+# ... (restul fișierului rămâne la fel până la pasul 5) ...
+
+# 5. Configurare n8n
 ENV NODE_FUNCTION_ALLOW_EXTERNAL=puppeteer,puppeteer-extra,puppeteer-extra-plugin-stealth,puppeteer-extra-plugin-user-data-dir,puppeteer-extra-plugin-user-preferences
 
-# 6. Trecem pe userul 'node'
+# 6. Setăm variabila DISPLAY global (Astfel orice proces va ști unde e ecranul)
+ENV DISPLAY=:99
+
+# 7. Trecem pe userul 'node'
 USER node
 
-# 7. Pornim n8n în spatele unui monitor virtual (Xvfb)
-# Setăm rezoluția la 1920x1080 pentru a părea un PC normal
-CMD ["sh", "-c", "xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' n8n"]
+# 8. Comanda de start modificată:
+# Pornim Xvfb pe portul 99 în background (&), așteptăm 2 secunde să se inițieze, apoi pornim n8n
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1920x1080x24 -ac & sleep 2 && n8n"]
