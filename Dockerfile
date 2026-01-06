@@ -1,11 +1,13 @@
 # 1. Plecăm de la o imagine proaspătă de Linux (Debian 12)
 FROM node:20-bookworm
 
-# 2. Suntem automat root. Instalăm Chromium și dependențele de sistem.
+# 2. Suntem automat root. Instalăm Chromium, Xvfb și dependențele de sistem.
 USER root
 
+# Am adăugat 'xvfb' în lista de pachete
 RUN apt-get update && apt-get install -y \
     chromium \
+    xvfb \
     libnss3 \
     libfreetype6 \
     libharfbuzz0b \
@@ -16,12 +18,11 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Setăm calea către browser (folosim Chromium instalat mai sus)
+# 3. Setăm calea către browser
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# 4. Instalăm n8n și TOATE modulele necesare pentru Stealth și User Data
-# Am adăugat: puppeteer-extra, stealth, user-data-dir și am păstrat user-preferences
+# 4. Instalăm n8n și modulele necesare (Stealth, Extra, User-Data)
 RUN npm install -g n8n \
     puppeteer \
     n8n-nodes-puppeteer \
@@ -30,12 +31,12 @@ RUN npm install -g n8n \
     puppeteer-extra-plugin-user-data-dir \
     puppeteer-extra-plugin-user-preferences
 
-# 5. IMPORTANT: Configurare n8n pentru a permite importul modulelor externe
-# Fără linia asta, n8n va bloca require('puppeteer-extra') din motive de securitate.
+# 5. Configurare n8n pentru a permite importul modulelor externe
 ENV NODE_FUNCTION_ALLOW_EXTERNAL=puppeteer,puppeteer-extra,puppeteer-extra-plugin-stealth,puppeteer-extra-plugin-user-data-dir,puppeteer-extra-plugin-user-preferences
 
-# 6. Trecem pe userul 'node' pentru a rula aplicația în siguranță
+# 6. Trecem pe userul 'node'
 USER node
 
-# 7. Pornim n8n
-CMD ["n8n"]
+# 7. Pornim n8n în spatele unui monitor virtual (Xvfb)
+# Setăm rezoluția la 1920x1080 pentru a părea un PC normal
+CMD ["sh", "-c", "xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' n8n"]
