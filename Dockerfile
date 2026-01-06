@@ -1,9 +1,9 @@
-# 1. Folosim explicit versiunea DEBIAN (asta garanteaza ca apt-get exista)
-FROM n8nio/n8n:latest-debian
+# 1. Plecăm de la o imagine proaspătă de Linux (Debian 12)
+FROM node:20-bookworm
 
+# 2. Suntem automat root, dar e bine să știm. Instalam Chromium.
 USER root
 
-# 2. Instalam Chromium si dependintele necesare (metoda sigura Debian/Ubuntu)
 RUN apt-get update && apt-get install -y \
     chromium \
     libnss3 \
@@ -16,16 +16,15 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Setam variabilele pentru Puppeteer
+# 3. Setăm calea către browser
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# 4. Instalam Puppeteer global SI n8n-nodes-puppeteer (ca sa ai si nodul dorit!)
-RUN npm install -g puppeteer n8n-nodes-puppeteer
+# 4. Instalăm n8n și Puppeteer (tot ca root)
+RUN npm install -g n8n puppeteer n8n-nodes-puppeteer
 
-# 5. Instalam plugin-ul in folderul n8n ca sa apara in meniu
-RUN mkdir -p /home/node/.n8n/nodes && \
-    cd /home/node/.n8n/nodes && \
-    npm install n8n-nodes-puppeteer
-
+# 5. IMPORTANT: Trecem pe userul 'node' pentru a rula aplicația în siguranță
 USER node
+
+# 6. Pornim n8n
+CMD ["n8n"]
